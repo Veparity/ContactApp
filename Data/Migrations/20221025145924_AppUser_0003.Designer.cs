@@ -3,6 +3,7 @@ using System;
 using ContactApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ContactApp.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221025145924_AppUser_0003")]
+    partial class AppUser_0003
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,21 +23,6 @@ namespace ContactApp.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("CategoryContact", b =>
-                {
-                    b.Property<int>("CatergoriesId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ContactsId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("CatergoriesId", "ContactsId");
-
-                    b.HasIndex("ContactsId");
-
-                    b.ToTable("CategoryContact");
-                });
 
             modelBuilder.Entity("ContactApp.Models.AppUser", b =>
                 {
@@ -109,94 +96,6 @@ namespace ContactApp.Data.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
-                });
-
-            modelBuilder.Entity("ContactApp.Models.Category", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AppUserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AppUserId");
-
-                    b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("ContactApp.Models.Contact", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Address1")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Address2")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AppUserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("BirthDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<byte[]>("ImageData")
-                        .HasColumnType("bytea");
-
-                    b.Property<string>("ImageType")
-                        .HasColumnType("text");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("text");
-
-                    b.Property<int>("State")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ZipCode")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AppUserId");
-
-                    b.ToTable("Contacts");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -335,43 +234,6 @@ namespace ContactApp.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("CategoryContact", b =>
-                {
-                    b.HasOne("ContactApp.Models.Category", null)
-                        .WithMany()
-                        .HasForeignKey("CatergoriesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ContactApp.Models.Contact", null)
-                        .WithMany()
-                        .HasForeignKey("ContactsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ContactApp.Models.Category", b =>
-                {
-                    b.HasOne("ContactApp.Models.AppUser", "AppUser")
-                        .WithMany("Categories")
-                        .HasForeignKey("AppUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AppUser");
-                });
-
-            modelBuilder.Entity("ContactApp.Models.Contact", b =>
-                {
-                    b.HasOne("ContactApp.Models.AppUser", "AppUser")
-                        .WithMany("Contacts")
-                        .HasForeignKey("AppUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AppUser");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -421,13 +283,6 @@ namespace ContactApp.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("ContactApp.Models.AppUser", b =>
-                {
-                    b.Navigation("Categories");
-
-                    b.Navigation("Contacts");
                 });
 #pragma warning restore 612, 618
         }

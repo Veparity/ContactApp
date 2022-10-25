@@ -3,6 +3,7 @@ using System;
 using ContactApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ContactApp.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221025185752_Contact_0004")]
+    partial class Contact_0004
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,21 +23,6 @@ namespace ContactApp.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("CategoryContact", b =>
-                {
-                    b.Property<int>("CatergoriesId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ContactsId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("CatergoriesId", "ContactsId");
-
-                    b.HasIndex("ContactsId");
-
-                    b.ToTable("CategoryContact");
-                });
 
             modelBuilder.Entity("ContactApp.Models.AppUser", b =>
                 {
@@ -109,29 +96,6 @@ namespace ContactApp.Data.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
-                });
-
-            modelBuilder.Entity("ContactApp.Models.Category", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AppUserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AppUserId");
-
-                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("ContactApp.Models.Contact", b =>
@@ -335,32 +299,6 @@ namespace ContactApp.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("CategoryContact", b =>
-                {
-                    b.HasOne("ContactApp.Models.Category", null)
-                        .WithMany()
-                        .HasForeignKey("CatergoriesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ContactApp.Models.Contact", null)
-                        .WithMany()
-                        .HasForeignKey("ContactsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ContactApp.Models.Category", b =>
-                {
-                    b.HasOne("ContactApp.Models.AppUser", "AppUser")
-                        .WithMany("Categories")
-                        .HasForeignKey("AppUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AppUser");
-                });
-
             modelBuilder.Entity("ContactApp.Models.Contact", b =>
                 {
                     b.HasOne("ContactApp.Models.AppUser", "AppUser")
@@ -425,8 +363,6 @@ namespace ContactApp.Data.Migrations
 
             modelBuilder.Entity("ContactApp.Models.AppUser", b =>
                 {
-                    b.Navigation("Categories");
-
                     b.Navigation("Contacts");
                 });
 #pragma warning restore 612, 618
