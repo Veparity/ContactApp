@@ -1,18 +1,103 @@
-html {
-  font-size: 14px;
+:root {
+    --jt-primary-color: #ff7384;
+    --jt-secondary-color: #ff993b;
+    --jt-dark-color: #1b1b1b;
+    --jt-light-color: #dfe3e4;
+    --jt-darker-color: #000000;
+    --jt-lighter-light: #eeeeee;
+
+    --jt-font-title: 'Alumni Sans Pinstripe', sans-serif;
+    --jt-font-body: 'Montserrat', sans-serif;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+
+html,
+body{
+  height: 100%;
 }
 
-html {
-  position: relative;
-  min-height: 100%;
-}
+
 
 body {
+
+    background-color: var(--jt-lighter-light);
+    display: flex;
+    flex-direction: column;
   margin-bottom: 60px;
+  color: var(--jt-darker-color);
+  font-family: var(--jt-font-body);
+  font-weight: 400;
+  font-size: 1.2rem;
+}
+
+nav{
+    background-color: var(--jt-primary-color);
+}
+
+.navShadow {
+    box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+
+main{
+    background-color: var(--jt-lighter-light);
+}
+
+.content{
+    flex: 1 0 auto;
+    padding-top: 7.5rem;
+    padding-bottom: 2.5rem;
+}
+
+footer{
+    flex-shrink: 0;
+    background-color: var(--jt-secondary-color);
+}
+/* Button Overrides */
+
+.btn-outline-primary{
+    color: var(--jt-darker-color);
+    border-color: var(--jt-primary-color) !important;
+
+}
+
+.btn-outline:hover,
+.btn-outline:active,
+.btn-outline:focus {
+    border-color: var(--jt-secondary-color);
+    background-color: var(--jt-primary-color);
+}
+
+.btn-primary{
+    color: white !important;
+    background-color: var(--jt-primary-color) !important;
+    border-color: var(--jt-secondary-color);
+}
+
+.btn-primary:hover{
+    filter: brightness(1.2) !important;
+    border-color: var(--jt-primary-color);
+}
+
+.btn-primary:active,
+.btn-primary:visited,
+.btn-primary:focus{
+    filter: brightness(1.2) !important;
+}
+
+.btnLink{
+    width: 7rem;
+}
+
+/*End Button Override*/
+
+.socialicons{
+    color: var(--jt-darker-color);
+    opacity: 0.9;
+    font-size: 2rem;
+}
+
+.socialicons:hover{
+    color: var(--jt-primary-color) !important;
+    opacity: 1;
 }
