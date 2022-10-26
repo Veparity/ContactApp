@@ -9,6 +9,8 @@ using ContactApp.Data;
 using ContactApp.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
+using ContactApp.Enums;
+using ContactApp.Services.Interfaces;
 
 namespace ContactApp.Controllers
 {
@@ -17,11 +19,16 @@ namespace ContactApp.Controllers
         private readonly ApplicationDbContext _context;
         //Injecting the service UserManager to use here
         private readonly UserManager<AppUser> _userManager;
+        
+        private readonly IImageService _imageService;
         //Constructor below, gives you an instance of a class
-        public ContactsController(ApplicationDbContext context, UserManager<AppUser> userManager)
+        public ContactsController(ApplicationDbContext context, 
+                UserManager<AppUser> userManager,
+                IImageService imageService)
         {
             _context = context;
             _userManager = userManager;
+            _imageService = imageService;
         }
 
         // GET: Contacts
@@ -33,7 +40,7 @@ namespace ContactApp.Controllers
             string userId = _userManager.GetUserId(User);
 
 
-            var contacts = await _context.Contacts.Where(c => c.AppUserId == userId).Include(c => c.AppUser).ToListAsync();
+            List<Contact> contacts = await _context.Contacts.Where(c => c.AppUserId == userId).Include(c => c.AppUser).ToListAsync();
             return View( contacts);
         }
 
@@ -59,7 +66,9 @@ namespace ContactApp.Controllers
         // GET: Contacts/Create
         public IActionResult Create()
         {
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id");
+            ViewData["StatesList"] = new SelectList(Enum.GetValues(typeof(States)).Cast<States>().ToList());
+            
+
             return View();
         }
 
@@ -68,15 +77,39 @@ namespace ContactApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,AppUserId,FirstName,LastName,BirthDate,Address1,Address2,City,State,ZipCode,Email,PhoneNumber,Created,ImageData,ImageType")] Contact contact)
+        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,BirthDate,Address1,Address2,City,State,ZipCode,Email,PhoneNumber,ImageFile")] Contact contact)
         {
+            ModelState.Remove("AppUserId");
+
             if (ModelState.IsValid)
             {
+                contact.AppUserId = _userManager.GetUserId(User);
+                contact.Created = DateTime.UtcNow;
+
+                if (contact.BirthDate != null)
+                {
+                    contact.BirthDate = DateTime.SpecifyKind(contact.BirthDate.Value, DateTimeKind.Utc);
+                }
+
+                //Check whether there is a file/image has been selected
+                // If Imagefile is Not null set the ImageData property - convert the file to byte[]
+                // If ImageFile is Not null set the ImageType property - use the file extension as the value
+
+                if (contact.ImageFile != null)
+                {
+                    contact.ImageData = await  _imageService.ConvertFileToByteArrayAsync(contact.ImageFile);
+                    contact.ImageType = contact.ImageFile.ContentType;
+                }
+
+
+
                 _context.Add(contact);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id", contact.AppUserId);
+
+
+            ViewData["StatesList"] = new SelectList(Enum.GetValues(typeof(States)).Cast<States>().ToList());
             return View(contact);
         }
 

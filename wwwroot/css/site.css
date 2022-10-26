@@ -1,10 +1,13 @@
 :root {
-    --jt-primary-color: #ff7384;
-    --jt-secondary-color: #ff993b;
-    --jt-dark-color: #1b1b1b;
-    --jt-light-color: #dfe3e4;
-    --jt-darker-color: #000000;
+   
+   --jt-darker-color: #000000;
     --jt-lighter-light: #eeeeee;
+
+     --jt-primary-color: #284D47;
+    --jt-secondary-color: #965C4F;
+    --jt-dark-color: #4e3029;
+    --jt-light-color: #F5EEED;
+    --jt-hightlight-color: #c3693e;
 
     --jt-font-title: 'Alumni Sans Pinstripe', sans-serif;
     --jt-font-body: 'Montserrat', sans-serif;
@@ -20,18 +23,23 @@ body{
 
 body {
 
-    background-color: var(--jt-lighter-light);
-    display: flex;
-    flex-direction: column;
+  background-color: var(--jt-lighter-light);
+  display: flex;
+  flex-direction: column;
   margin-bottom: 60px;
   color: var(--jt-darker-color);
   font-family: var(--jt-font-body);
   font-weight: 400;
-  font-size: 1.2rem;
+  font-size: 1rem;
 }
 
 nav{
-    background-color: var(--jt-primary-color);
+    background-color: var(--jt-dark-color);
+    color: var(--jt-lighter-light) !important;
+}
+
+.nav-link{
+    color: var(--jt-lighter-light);
 }
 
 .navShadow {
@@ -45,13 +53,13 @@ main{
 
 .content{
     flex: 1 0 auto;
-    padding-top: 7.5rem;
+    padding-top: 3.5rem;
     padding-bottom: 2.5rem;
 }
 
 footer{
     flex-shrink: 0;
-    background-color: var(--jt-secondary-color);
+    background-color: var(--jt-dark-color);
 }
 /* Button Overrides */
 
@@ -101,3 +109,39 @@ footer{
     color: var(--jt-primary-color) !important;
     opacity: 1;
 }
+
+.table{
+  
+    max-width: none;
+    font-size: .8rem;
+}
+
+.copyright{
+    font-size: .9rem;
+}
+
+/* Begin: Landing page*/
+.icon{
+    font-size: 4rem;
+}
+
+.textHighLight{
+    color: var(--jt-primary-color);
+}
+
+.heroTitle{
+    padding-top: 2.5rem;
+    font-size: 3.1rem;
+    text-transform: uppercase;
+    font-family: var(--jt-font-title);
+    font-weight: 600;
+    margin-left: 3rem;
+}
+
+.subTitle{
+    font-size: 1.5rem;
+    font-family: var(--jt-font-body);
+    margin-left: 3rem;
+}
+
+/*End landing page*/
