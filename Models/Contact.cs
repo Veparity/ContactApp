@@ -55,6 +55,6 @@ namespace ContactApp.Models
         //Navigation Properties
 
         public virtual AppUser? AppUser { get; set; }
-        public virtual ICollection<Category> Catergories {get; set;} = new HashSet<Category>();
+        public virtual ICollection<Category> Categories {get; set;} = new HashSet<Category>();
     }
 }

@@ -144,4 +144,42 @@ footer{
     margin-left: 3rem;
 }
 
+.imgicon {
+    display: inline;
+    height: 3.5rem;
+    margin: 0rem .3rem;
+}
+
+figcaption {
+    color: var(--jt-dark-color);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
 /*End landing page*/
+
+
+/* Square Image Css*/
+
+.square-img-container{
+    position: relative;
+    background-color: var(--jt-light-color);
+    border-color: gray;
+    border-style: solid;
+}
+
+.square-img-container::after{
+    content: "";
+    display: block;
+    padding-bottom: 100%;
+}
+
+
+.square-img{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+/* End Square Image Css */

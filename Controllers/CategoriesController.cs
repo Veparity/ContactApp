@@ -7,23 +7,32 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ContactApp.Data;
 using ContactApp.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ContactApp.Controllers
 {
     public class CategoriesController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
 
-        public CategoriesController(ApplicationDbContext context)
+        public CategoriesController(ApplicationDbContext context,
+                                    UserManager<AppUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: Categories
+        [Authorize]
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Categories.Include(c => c.AppUser);
-            return View(await applicationDbContext.ToListAsync());
+
+            string userId = _userManager.GetUserId(User);
+
+            List<Category> categories = await _context.Categories.Where(c => c.AppUserId == userId).Include(c => c.AppUser).ToListAsync();
+            return View(categories);
         }
 
         // GET: Categories/Details/5
@@ -46,26 +55,36 @@ namespace ContactApp.Controllers
         }
 
         // GET: Categories/Create
+        [Authorize]
         public IActionResult Create()
         {
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id");
+           
             return View();
         }
 
         // POST: Categories/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,AppUserId,Name")] Category category)
+        public async Task<IActionResult> Create([Bind("Id,Name")] Category category)
         {
+
+            ModelState.Remove("AppUserId");
+
             if (ModelState.IsValid)
             {
+
+                string userId = _userManager.GetUserId(User);
+                category.AppUserId = userId;
+
+
                 _context.Add(category);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id", category.AppUserId);
+           
             return View(category);
         }
 
@@ -77,12 +96,12 @@ namespace ContactApp.Controllers
                 return NotFound();
             }
 
-            var category = await _context.Categories.FindAsync(id);
+            Category? category = await _context.Categories.FindAsync(id);
+
             if (category == null)
             {
                 return NotFound();
             }
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id", category.AppUserId);
             return View(category);
         }
 
@@ -118,7 +137,6 @@ namespace ContactApp.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id", category.AppUserId);
             return View(category);
         }
 

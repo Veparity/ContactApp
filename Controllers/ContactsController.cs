@@ -21,14 +21,17 @@ namespace ContactApp.Controllers
         private readonly UserManager<AppUser> _userManager;
         
         private readonly IImageService _imageService;
+        private readonly IAddressBookService _addressBookService;
         //Constructor below, gives you an instance of a class
         public ContactsController(ApplicationDbContext context, 
                 UserManager<AppUser> userManager,
-                IImageService imageService)
+                IImageService imageService,
+                IAddressBookService addressBookService)
         {
             _context = context;
             _userManager = userManager;
             _imageService = imageService;
+            _addressBookService = addressBookService;
         }
 
         // GET: Contacts
@@ -40,7 +43,7 @@ namespace ContactApp.Controllers
             string userId = _userManager.GetUserId(User);
 
 
-            List<Contact> contacts = await _context.Contacts.Where(c => c.AppUserId == userId).Include(c => c.AppUser).ToListAsync();
+            List<Contact> contacts = await _context.Contacts.Where(c => c.AppUserId == userId).Include(c => c.AppUser).Include(c => c.Categories).ToListAsync();
             return View( contacts);
         }
 
@@ -64,10 +67,14 @@ namespace ContactApp.Controllers
         }
 
         // GET: Contacts/Create
-        public IActionResult Create()
+        [Authorize]
+        public async Task<IActionResult> Create()
         {
             ViewData["StatesList"] = new SelectList(Enum.GetValues(typeof(States)).Cast<States>().ToList());
-            
+
+            string userId = _userManager.GetUserId(User);
+            List<Category> categories = await _context.Categories.Where(c => c.AppUserId == userId).ToListAsync();
+            ViewData["CategoryList"] = new MultiSelectList(categories, "Id", "Name");
 
             return View();
         }
@@ -75,9 +82,10 @@ namespace ContactApp.Controllers
         // POST: Contacts/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,BirthDate,Address1,Address2,City,State,ZipCode,Email,PhoneNumber,ImageFile")] Contact contact)
+        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,BirthDate,Address1,Address2,City,State,ZipCode,Email,PhoneNumber,ImageFile")] Contact contact, List<int> categoryList)
         {
             ModelState.Remove("AppUserId");
 
@@ -105,11 +113,29 @@ namespace ContactApp.Controllers
 
                 _context.Add(contact);
                 await _context.SaveChangesAsync();
+
+                //Taking each id we have and adding/getting the corresponding category and
+                //applying it to the contact
+
+                //ToDo:use the list of category Ids to...
+                //1. Find the associated category
+                //2. Add the categories to the collection of categories for the current contact
+
+                foreach(int categoryId in categoryList)
+                {
+                    await _addressBookService.AddContactToCategoryAysnc(categoryId, contact.Id);
+                }
+
+
+
                 return RedirectToAction(nameof(Index));
             }
 
 
             ViewData["StatesList"] = new SelectList(Enum.GetValues(typeof(States)).Cast<States>().ToList());
+            string userId = _userManager.GetUserId(User);
+            List<Category> categories = await _context.Categories.Where(c => c.AppUserId == userId).ToListAsync();
+            ViewData["CategoryList"] = new MultiSelectList(categories, "Id", "Name");
             return View(contact);
         }
 
@@ -121,12 +147,14 @@ namespace ContactApp.Controllers
                 return NotFound();
             }
 
-            var contact = await _context.Contacts.FindAsync(id);
+            Contact? contact = await _context.Contacts.FindAsync(id);
+
             if (contact == null)
             {
                 return NotFound();
             }
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id", contact.AppUserId);
+            ViewData["StatesList"] = new SelectList(Enum.GetValues(typeof(States)).Cast<States>().ToList());
+
             return View(contact);
         }
 
@@ -135,7 +163,7 @@ namespace ContactApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,AppUserId,FirstName,LastName,BirthDate,Address1,Address2,City,State,ZipCode,Email,PhoneNumber,Created,ImageData,ImageType")] Contact contact)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,AppUserId,FirstName,LastName,BirthDate,Address1,Address2,City,State,ZipCode,Email,PhoneNumber,Created,ImageFile,ImageData,ImageType")] Contact contact)
         {
             if (id != contact.Id)
             {
@@ -146,8 +174,31 @@ namespace ContactApp.Controllers
             {
                 try
                 {
+                    contact.Created = DateTime.SpecifyKind(contact.Created, DateTimeKind.Utc);
+
+
+                    if (contact.BirthDate != null)
+                    {
+                        contact.BirthDate = DateTime.SpecifyKind(contact.BirthDate.Value, DateTimeKind.Utc);
+                    }
+
+                    //Check whether there is a file/image has been selected
+                    // If Imagefile is Not null set the ImageData property - convert the file to byte[]
+                    // If ImageFile is Not null set the ImageType property - use the file extension as the value
+
+                    if (contact.ImageFile != null)
+                    {
+                        contact.ImageData = await _imageService.ConvertFileToByteArrayAsync(contact.ImageFile);
+                        contact.ImageType = contact.ImageFile.ContentType;
+                    }
+
+
+
                     _context.Update(contact);
                     await _context.SaveChangesAsync();
+
+                    //Todo: Add categories code
+
                 }
                 catch (DbUpdateConcurrencyException)
                 {
