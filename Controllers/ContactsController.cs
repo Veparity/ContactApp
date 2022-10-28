@@ -44,6 +44,11 @@ namespace ContactApp.Controllers
 
 
             List<Contact> contacts = await _context.Contacts.Where(c => c.AppUserId == userId).Include(c => c.AppUser).Include(c => c.Categories).ToListAsync();
+
+            List<Category> userCategories = await _context.Categories.Where(c => c.AppUserId == userId).ToListAsync();
+
+            ViewData["CategoryId"] = new SelectList(userCategories, "Id", "Name");
+
             return View( contacts);
         }
 
@@ -72,6 +77,7 @@ namespace ContactApp.Controllers
         {
             ViewData["StatesList"] = new SelectList(Enum.GetValues(typeof(States)).Cast<States>().ToList());
 
+            //Categories for dropDown
             string userId = _userManager.GetUserId(User);
             List<Category> categories = await _context.Categories.Where(c => c.AppUserId == userId).ToListAsync();
             ViewData["CategoryList"] = new MultiSelectList(categories, "Id", "Name");
@@ -147,13 +153,28 @@ namespace ContactApp.Controllers
                 return NotFound();
             }
 
-            Contact? contact = await _context.Contacts.FindAsync(id);
+            string appUserId = _userManager.GetUserId(User);
+
+            Contact? contact = await _context.Contacts.Include(contact => contact.Categories).FirstOrDefaultAsync(c => c.Id == id && c.AppUserId == appUserId);
 
             if (contact == null)
             {
                 return NotFound();
             }
+
+            //States dropDown
             ViewData["StatesList"] = new SelectList(Enum.GetValues(typeof(States)).Cast<States>().ToList());
+
+            //Load data for the custom Categories dropdown
+            //.include above allows for the code line below
+
+            List<Category> categories = (await _addressBookService.GetAppUserCategoriesAsync(appUserId)).ToList();
+
+            List<int> categoryIds = contact.Categories.Select(c => c.Id ).ToList();
+
+
+
+            ViewData["CategoryList"] = new MultiSelectList(categories, "Id", "Name", categoryIds);
 
             return View(contact);
         }
@@ -163,7 +184,7 @@ namespace ContactApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,AppUserId,FirstName,LastName,BirthDate,Address1,Address2,City,State,ZipCode,Email,PhoneNumber,Created,ImageFile,ImageData,ImageType")] Contact contact)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,AppUserId,FirstName,LastName,BirthDate,Address1,Address2,City,State,ZipCode,Email,PhoneNumber,Created,ImageFile,ImageData,ImageType")] Contact contact, List<int> categoryList)
         {
             if (id != contact.Id)
             {
@@ -199,6 +220,14 @@ namespace ContactApp.Controllers
 
                     //Todo: Add categories code
 
+                    //Remove current categories
+
+                    await _addressBookService.RemoveAllContactCategoriesAysnc(contact.Id);
+
+                    // Add seleccted categories to contact
+
+                    await _addressBookService.AddContactToCategoriesAsync(categoryList, contact.Id);
+
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -213,7 +242,20 @@ namespace ContactApp.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id", contact.AppUserId);
+            //States dropDown
+            ViewData["StatesList"] = new SelectList(Enum.GetValues(typeof(States)).Cast<States>().ToList());
+
+            //Load data for the custom Categories dropdown
+            //.include above allows for the code line below
+
+            List<Category> categories = (await _addressBookService.GetAppUserCategoriesAsync(contact.AppUserId!)).ToList();
+
+            List<int> categoryIds = contact.Categories.Select(c => c.Id).ToList();
+
+
+
+            ViewData["CategoryList"] = new MultiSelectList(categories, "Id", "Name", categoryIds);
+
             return View(contact);
         }
 
