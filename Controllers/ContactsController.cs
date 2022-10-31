@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using ContactApp.Enums;
 using ContactApp.Services.Interfaces;
+using Org.BouncyCastle.Bcpg.OpenPgp;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace ContactApp.Controllers
 {
@@ -22,34 +24,133 @@ namespace ContactApp.Controllers
         
         private readonly IImageService _imageService;
         private readonly IAddressBookService _addressBookService;
+        private readonly IEmailSender _emailSender;
+
         //Constructor below, gives you an instance of a class
         public ContactsController(ApplicationDbContext context, 
                 UserManager<AppUser> userManager,
                 IImageService imageService,
-                IAddressBookService addressBookService)
+                IAddressBookService addressBookService,
+                IEmailSender emailSender)
         {
             _context = context;
             _userManager = userManager;
             _imageService = imageService;
             _addressBookService = addressBookService;
+            _emailSender = emailSender;
         }
 
         // GET: Contacts
 
         //Filter the database to get the contacts of just the logged in user
         [Authorize]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? categoryId, string? swalMessage = null)
         {
+            ViewData["SwalMessage"] = swalMessage;
+
             string userId = _userManager.GetUserId(User);
 
 
-            List<Contact> contacts = await _context.Contacts.Where(c => c.AppUserId == userId).Include(c => c.AppUser).Include(c => c.Categories).ToListAsync();
+            List<Contact> contacts = new List<Contact>();
 
             List<Category> userCategories = await _context.Categories.Where(c => c.AppUserId == userId).ToListAsync();
 
-            ViewData["CategoryId"] = new SelectList(userCategories, "Id", "Name");
+            if (categoryId == null)
+            {
+                contacts = await _context.Contacts.Where(c => c.AppUserId == userId).Include(c => c.AppUser).Include(c => c.Categories).ToListAsync();
+            }
+            else
+            {
+                contacts = (await _context.Categories.Include(c => c.Contacts).FirstOrDefaultAsync(c => c.AppUserId == userId && c.Id == categoryId))!.Contacts.ToList();
+            }
 
-            return View( contacts);
+            ViewData["CategoryId"] = new SelectList(userCategories, "Id", "Name", categoryId);
+
+            return View(contacts);
+        }
+
+        [Authorize]
+        [HttpGet]
+        //new action
+        public async Task<IActionResult> EmailContact(int? id)
+        {
+            string appUserId = _userManager.GetUserId(User);
+
+            //Also prevents malicious activity
+            Contact? contact = await _context.Contacts.FirstOrDefaultAsync(c => c.Id == id && c.AppUserId == appUserId);
+
+            if (contact == null)
+            {
+                return NotFound();
+            }
+
+            EmailData emailData = new EmailData()
+            {
+                EmailAddress = contact.Email,
+                FirstName = contact.FirstName,
+                LastName = contact.LastName
+            };
+
+            EmailContactViewModel viewmodel = new EmailContactViewModel()
+            {
+                Contact = contact,
+                EmailData = emailData
+            };
+
+            return View(viewmodel);
+        }
+
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EmailContact(EmailContactViewModel viewmodel)
+        {
+            if (ModelState.IsValid)
+            {
+                string? swalMessage = string.Empty;
+
+                try
+                {
+                    await _emailSender.SendEmailAsync(viewmodel.EmailData!.EmailAddress, viewmodel.EmailData.EmailSubject, viewmodel.EmailData.EmailBody);
+                    swalMessage = "Success: Email Sent!";
+                    return RedirectToAction("Index", "Contacts", new { swalMessage });
+                }
+                catch (Exception)
+                {
+                    swalMessage = "Error: Email Send Failed!";
+                    return RedirectToAction("Index", "Contacts", new { swalMessage });
+                    throw;
+                }
+                
+            }
+
+            return View(viewmodel);
+        }
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SearchContacts(string searchString)
+        {
+            string appUserId = _userManager.GetUserId(User);
+
+            List<Contact> contacts = new List<Contact>();
+
+            AppUser? appUser = await _context.Users.Include(c => c.Contacts).ThenInclude(c => c.Categories).FirstOrDefaultAsync(u => u.Id == appUserId);
+
+            if(string.IsNullOrEmpty(searchString))
+            {
+                contacts = appUser!.Contacts.OrderBy(c => c.LastName).ThenBy(c => c.FirstName).ToList();
+            }
+            else
+            {
+                contacts = appUser!.Contacts.Where(c => c.FullName!.ToLower().Contains(searchString.ToLower())).OrderBy(c => c.LastName).ThenBy(c => c.FirstName).ToList();
+            }
+
+
+            ViewData["CategoryId"] = new SelectList(appUser.Categories, "Id", "Name");
+
+            return View(nameof(Index), contacts);
         }
 
         // GET: Contacts/Details/5
